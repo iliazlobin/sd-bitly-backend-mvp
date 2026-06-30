@@ -19,7 +19,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY --from=builder /install /usr/local
 COPY src/ src/
-COPY alembic.ini alembic/
+COPY alembic.ini .
 COPY alembic/ alembic/
 
 WORKDIR /app
