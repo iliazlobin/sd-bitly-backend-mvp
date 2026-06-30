@@ -17,12 +17,12 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1
 
+WORKDIR /app
+
 COPY --from=builder /install /usr/local
 COPY src/ src/
 COPY alembic.ini .
 COPY alembic/ alembic/
-
-WORKDIR /app
 
 EXPOSE 8000
 
