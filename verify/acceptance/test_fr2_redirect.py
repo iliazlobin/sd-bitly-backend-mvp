@@ -3,6 +3,7 @@
 AC2: GET /{short_code} → 301 Location: {long_url} with Cache-Control: private, max-age=90.
      Non-existent code → 404. Each redirect increments the click counter.
 """
+
 import httpx
 
 from verify.acceptance.conftest import (
@@ -28,12 +29,8 @@ def test_redirect_returns_301_with_location(client: httpx.Client):
 
     # Must include Cache-Control header with max-age=90
     cache_control = r.headers.get("Cache-Control", "")
-    assert "max-age=90" in cache_control, (
-        f"Cache-Control missing max-age=90: {cache_control!r}"
-    )
-    assert "private" in cache_control.lower(), (
-        f"Cache-Control missing private: {cache_control!r}"
-    )
+    assert "max-age=90" in cache_control, f"Cache-Control missing max-age=90: {cache_control!r}"
+    assert "private" in cache_control.lower(), f"Cache-Control missing private: {cache_control!r}"
 
 
 def test_redirect_nonexistent_code_404(client: httpx.Client):
@@ -53,9 +50,7 @@ def test_redirect_increments_click_count(client: httpx.Client):
 
     # Verify click count via stats
     stats = assert_json_200(client.get(f"/api/urls/{short_code}/stats"))
-    assert stats["clicks"] == 3, (
-        f"Expected 3 clicks after 3 redirects, got {stats['clicks']}"
-    )
+    assert stats["clicks"] == 3, f"Expected 3 clicks after 3 redirects, got {stats['clicks']}"
 
 
 def test_redirect_with_query_params(client: httpx.Client):

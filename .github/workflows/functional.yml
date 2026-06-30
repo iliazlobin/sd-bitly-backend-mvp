@@ -37,9 +37,11 @@ jobs:
       - name: Run migrations
         run: alembic upgrade head
         env:
+          PYTHONPATH: .
           DATABASE_URL: postgresql+asyncpg://bitly:bitly@localhost:5432/bitly
 
       - name: Run functional tests
         run: pytest tests/functional/ -v
         env:
+          PYTHONPATH: .
           DATABASE_URL: postgresql+asyncpg://bitly:bitly@localhost:5432/bitly

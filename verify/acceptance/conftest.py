@@ -26,11 +26,12 @@ def client(base_url: str) -> httpx.Client:
 
 # --- Assert helpers ---------------------------------------------------------
 
+
 def assert_json_200(r: httpx.Response, expected_status: int = 200):
     """Assert status and return parsed JSON."""
-    assert r.status_code == expected_status, (
-        f"Expected {expected_status}, got {r.status_code}: {r.text}"
-    )
+    assert (
+        r.status_code == expected_status
+    ), f"Expected {expected_status}, got {r.status_code}: {r.text}"
     return r.json()
 
 
@@ -39,9 +40,7 @@ def assert_201(r: httpx.Response):
 
 
 def assert_301(r: httpx.Response):
-    assert r.status_code == 301, (
-        f"Expected 301, got {r.status_code}: {r.text}"
-    )
+    assert r.status_code == 301, f"Expected 301, got {r.status_code}: {r.text}"
     return r
 
 

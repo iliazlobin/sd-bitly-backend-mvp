@@ -14,7 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 
 from src.bitly.database import Base, get_session
-from src.bitly.models import URL  # noqa: F401  # ensure model registered before create_all
+from src.bitly.models import (
+    URL,  # noqa: F401  # ensure model registered before create_all
+)
 from src.bitly.redis import get_redis as original_get_redis
 
 TEST_DATABASE_URL = "sqlite+aiosqlite://"

@@ -5,7 +5,7 @@ functions; they never touch the database or Redis directly.
 """
 
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse, urlunparse
 
 import redis.asyncio as aioredis
@@ -133,10 +133,10 @@ async def lookup_url(
     # Helper: make a datetime UTC-aware if it is naive (SQLite returns naive).
     def _ensure_utc(dt: datetime) -> datetime:
         if dt.tzinfo is None:
-            return dt.replace(tzinfo=timezone.utc)
+            return dt.replace(tzinfo=UTC)
         return dt
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Check Redis cache first.
     cached = await redis.get(f"url:{short_code}")
@@ -146,9 +146,7 @@ async def lookup_url(
         # We have the long_url cached; still need to check expiry
         # by querying the DB (or we could cache expires_at too).
         # For simplicity, query the DB for expiry check on cache hit.
-        row = await db.execute(
-            select(URL.expires_at).where(URL.short_code == short_code)
-        )
+        row = await db.execute(select(URL.expires_at).where(URL.short_code == short_code))
         expires_at = row.scalar_one_or_none()
         # If row is None, the cache was stale (shouldn't happen, but handle it).
         if expires_at is None:
@@ -161,9 +159,7 @@ async def lookup_url(
             return (long_url, False)
 
     # Cache miss — query PostgreSQL.
-    row = await db.execute(
-        select(URL.long_url, URL.expires_at).where(URL.short_code == short_code)
-    )
+    row = await db.execute(select(URL.long_url, URL.expires_at).where(URL.short_code == short_code))
     result = row.one_or_none()
     if result is None:
         return None
@@ -182,9 +178,7 @@ async def lookup_url(
 
 async def increment_clicks(db: AsyncSession, short_code: str) -> None:
     """Atomically increment the click counter for *short_code*."""
-    await db.execute(
-        update(URL).where(URL.short_code == short_code).values(clicks=URL.clicks + 1)
-    )
+    await db.execute(update(URL).where(URL.short_code == short_code).values(clicks=URL.clicks + 1))
     await db.commit()
 
 
@@ -193,9 +187,7 @@ async def get_stats(
     short_code: str,
 ) -> StatsResponse | None:
     """Return stats for *short_code*, or None if not found."""
-    row = await db.execute(
-        select(URL).where(URL.short_code == short_code)
-    )
+    row = await db.execute(select(URL).where(URL.short_code == short_code))
     url = row.scalar_one_or_none()
     if url is None:
         return None

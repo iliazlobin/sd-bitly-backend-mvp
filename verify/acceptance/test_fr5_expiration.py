@@ -3,6 +3,7 @@
 AC5: POST /api/urls with expires_at → stored. Redirect with expires_at < now() → 410 Gone.
      Stats shows expires_at value. Non-expired links redirect normally.
 """
+
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -32,10 +33,15 @@ def test_create_with_expires_at(client: httpx.Client):
 def test_expired_link_returns_410(client: httpx.Client):
     """Redirect to an expired link → 410 Gone."""
     past = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-    url_obj = assert_201(client.post("/api/urls", json={
-        "long_url": "https://example.com/already-expired",
-        "expires_at": past,
-    }))
+    url_obj = assert_201(
+        client.post(
+            "/api/urls",
+            json={
+                "long_url": "https://example.com/already-expired",
+                "expires_at": past,
+            },
+        )
+    )
     short_code = url_obj["short_code"]
 
     body = assert_410(client.get(f"/{short_code}"))
@@ -74,10 +80,15 @@ def test_non_expired_link_redirects(client: httpx.Client):
 def test_expired_link_stats_still_accessible(client: httpx.Client):
     """Stats remain accessible even after a link expires."""
     past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
-    url_obj = assert_201(client.post("/api/urls", json={
-        "long_url": "https://example.com/expired-but-stats",
-        "expires_at": past,
-    }))
+    url_obj = assert_201(
+        client.post(
+            "/api/urls",
+            json={
+                "long_url": "https://example.com/expired-but-stats",
+                "expires_at": past,
+            },
+        )
+    )
     short_code = url_obj["short_code"]
 
     # Redirect returns 410

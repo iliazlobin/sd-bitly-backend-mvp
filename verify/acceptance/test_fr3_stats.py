@@ -3,6 +3,7 @@
 AC3: GET /api/urls/{short_code}/stats → 200 with short_code, long_url, clicks, created_at,
      expires_at. Non-existent → 404. Clicks reflect actual redirect count.
 """
+
 import httpx
 
 from verify.acceptance.conftest import assert_201, assert_404, assert_json_200
@@ -39,9 +40,7 @@ def test_stats_clicks_match_redirect_count(client: httpx.Client):
         assert r.status_code == 301
 
     stats = assert_json_200(client.get(f"/api/urls/{short_code}/stats"))
-    assert stats["clicks"] == 5, (
-        f"Expected 5 clicks after 5 redirects, got {stats['clicks']}"
-    )
+    assert stats["clicks"] == 5, f"Expected 5 clicks after 5 redirects, got {stats['clicks']}"
 
 
 def test_stats_zero_clicks_after_create(client: httpx.Client):

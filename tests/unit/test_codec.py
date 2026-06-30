@@ -80,11 +80,23 @@ class TestBase62Decode:
 class TestRoundtrip:
     """Encode → decode should return the original value."""
 
-    @pytest.mark.parametrize("n", [
-        0, 1, 10, 61, 62, 100, 1000, 9999,
-        62**6 - 1, 62**6, 62**6 + 1,
-        62**7 - 1,
-    ])
+    @pytest.mark.parametrize(
+        "n",
+        [
+            0,
+            1,
+            10,
+            61,
+            62,
+            100,
+            1000,
+            9999,
+            62**6 - 1,
+            62**6,
+            62**6 + 1,
+            62**7 - 1,
+        ],
+    )
     def test_roundtrip(self, n: int) -> None:
         encoded = base62_encode(n)
         assert len(encoded) == 7, f"encode({n}) = {encoded!r}, expected 7 chars"
