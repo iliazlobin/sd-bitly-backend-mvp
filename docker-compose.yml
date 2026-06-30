@@ -30,6 +30,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://bitly:bitly@db:5432/bitly
       REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-10}
     depends_on:
       db:
         condition: service_healthy

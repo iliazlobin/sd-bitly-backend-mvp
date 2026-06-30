@@ -41,13 +41,15 @@ jobs:
           echo "PORT=${PORT}"
           echo "MODE=${MODE}"
 
-      - name: Start stack
+      # ── Phase 1: all acceptance tests EXCEPT rate-limit, with high limit ──
+      - name: Start stack (high rate limit)
         run: |
           set -a
           source verify/manifest.env
+          export RATE_LIMIT_REQUESTS=100
           eval "$UP"
 
-      - name: Wait for health
+      - name: Wait for health (phase 1)
         run: |
           set -a
           source verify/manifest.env
@@ -62,20 +64,56 @@ jobs:
           docker compose logs app --tail=100
           exit 1
 
-      - name: Run acceptance tests
+      - name: Run acceptance tests (excl. rate-limit)
         run: |
           set -a
           source verify/manifest.env
-          failed=0
-          for f in verify/acceptance/test_*.py; do
-            echo "=== Running $f ==="
-            API_BASE_URL="http://localhost:${PORT}" python -m pytest "$f" -v --tb=line 2>&1 || failed=1
-            # Sleep 2s between files so the rate-limit window (1s) resets
-            sleep 2
-          done
-          exit $failed
+          API_BASE_URL="http://localhost:${PORT}" python -m pytest verify/acceptance/ -v --tb=line \
+            -k "not test_rate_limit" 2>&1 || {
+              echo "::error ::Non-rate-limit acceptance tests FAILED"
+              exit 1
+            }
 
-      - name: Tear down
+      - name: Tear down (phase 1)
+        run: |
+          set -a
+          source verify/manifest.env
+          eval "$DOWN"
+
+      # ── Phase 2: rate-limit test only, with production limit ──
+      - name: Start stack (production rate limit)
+        run: |
+          set -a
+          source verify/manifest.env
+          export RATE_LIMIT_REQUESTS=10
+          eval "$UP"
+
+      - name: Wait for health (phase 2)
+        run: |
+          set -a
+          source verify/manifest.env
+          for i in $(seq 1 30); do
+            if eval "$READY"; then
+              echo "Healthy after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "=== Health check failed after 30s ==="
+          docker compose logs app --tail=100
+          exit 1
+
+      - name: Run rate-limit acceptance test
+        run: |
+          set -a
+          source verify/manifest.env
+          API_BASE_URL="http://localhost:${PORT}" python -m pytest \
+            verify/acceptance/test_fr1_create.py::test_rate_limit_exceeded -v --tb=line 2>&1 || {
+              echo "::error ::Rate-limit acceptance test FAILED"
+              exit 1
+            }
+
+      - name: Tear down (phase 2)
         if: always()
         run: |
           set -a
