@@ -58,7 +58,8 @@ jobs:
             fi
             sleep 1
           done
-          echo "Health check failed after 30s"
+          echo "=== Health check failed after 30s ==="
+          docker compose logs app --tail=100
           exit 1
 
       - name: Run acceptance tests
