@@ -66,15 +66,14 @@ jobs:
         run: |
           set -a
           source verify/manifest.env
-          API_BASE_URL="http://localhost:${PORT}" python -m pytest verify/acceptance/ -v --tb=line 2>&1 | tee /tmp/test-output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "::error ::Acceptance tests FAILED (exit $EXIT_CODE). Failures:"
-            grep -E "FAILED|assert|Error" /tmp/test-output.txt | while IFS= read -r line; do
-              echo "::error ::$line"
-            done
-          fi
-          exit $EXIT_CODE
+          failed=0
+          for f in verify/acceptance/test_*.py; do
+            echo "=== Running $f ==="
+            API_BASE_URL="http://localhost:${PORT}" python -m pytest "$f" -v --tb=line 2>&1 || failed=1
+            # Sleep 2s between files so the rate-limit window (1s) resets
+            sleep 2
+          done
+          exit $failed
 
       - name: Tear down
         if: always()
