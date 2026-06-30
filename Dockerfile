@@ -24,6 +24,8 @@ COPY src/ src/
 COPY alembic.ini .
 COPY alembic/ alembic/
 
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
 CMD ["uvicorn", "src.bitly.main:app", "--host", "0.0.0.0", "--port", "8000"]
