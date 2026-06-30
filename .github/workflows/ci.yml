@@ -62,38 +62,11 @@ jobs:
           docker compose logs app --tail=100
           exit 1
 
-      - name: Debug — container status
-        run: |
-          docker compose ps
-          docker compose logs app --tail=30
-
-      - name: API smoke test
-        run: |
-          BASE="http://localhost:8010"
-          # Create a short URL
-          RESULT=$(curl -sf -X POST "$BASE/api/urls" -H "Content-Type: application/json" -d '{"long_url":"https://example.com/test"}' 2>&1) || { echo "::error ::POST /api/urls failed: $RESULT"; exit 1; }
-          echo "CREATE: $RESULT"
-          SHORT_CODE=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['short_code'])" 2>&1) || { echo "::error ::Failed to parse short_code"; exit 1; }
-          echo "SHORT_CODE=$SHORT_CODE"
-          # Redirect
-          REDIR=$(curl -sf -o /dev/null -w "%{http_code}" "$BASE/$SHORT_CODE" 2>&1) || { echo "::error ::GET /$SHORT_CODE failed"; exit 1; }
-          echo "REDIRECT status: $REDIR"
-          # Stats
-          STATS=$(curl -sf "$BASE/api/urls/$SHORT_CODE/stats" 2>&1) || { echo "::error ::GET /api/urls/$SHORT_CODE/stats failed: $STATS"; exit 1; }
-          echo "STATS: $STATS"
-          echo "::notice ::All API smoke tests passed"
-
       - name: Run acceptance tests
         run: |
           set -a
           source verify/manifest.env
-          API_BASE_URL="http://localhost:${PORT}" python -m pytest verify/acceptance/ -v --tb=line 2>&1 | tee /tmp/test-output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "::error ::Acceptance tests FAILED (exit $EXIT_CODE). Last 20 lines of output:"
-            tail -20 /tmp/test-output.txt | while IFS= read -r line; do echo "::error ::$line"; done
-          fi
-          exit $EXIT_CODE
+          eval "$ACCEPTANCE"
 
       - name: Tear down
         if: always()
