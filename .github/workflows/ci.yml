@@ -98,6 +98,8 @@ jobs:
         run: |
           set -a
           source verify/manifest.env
+          echo "=== Container environment (phase 2) ==="
+          docker compose exec -T app env | grep -E "(RATE_LIMIT|DATABASE|REDIS)" || true
           for i in $(seq 1 30); do
             if eval "$READY"; then
               echo "Healthy after ${i}s"
