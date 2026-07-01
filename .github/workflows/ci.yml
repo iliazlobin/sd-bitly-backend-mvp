@@ -41,12 +41,15 @@ jobs:
           echo "PORT=${PORT}"
           echo "MODE=${MODE}"
 
-      # ── Phase 1: all acceptance tests EXCEPT rate-limit, with high limit ──
+      # ── Phase 1: all acceptance tests EXCEPT rate-limit, with high limit from manifest ──
       - name: Start stack (high rate limit)
         run: |
           set -a
           source verify/manifest.env
-          export RATE_LIMIT_REQUESTS=100
+          cat > .env << COMPOSEENV
+          RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS}
+          RATE_LIMIT_WINDOW_S=${RATE_LIMIT_WINDOW_S}
+          COMPOSEENV
           eval "$UP"
 
       - name: Wait for health (phase 1)
@@ -85,7 +88,10 @@ jobs:
         run: |
           set -a
           source verify/manifest.env
-          export RATE_LIMIT_REQUESTS=10
+          cat > .env << COMPOSEENV
+          RATE_LIMIT_REQUESTS=10
+          RATE_LIMIT_WINDOW_S=1
+          COMPOSEENV
           eval "$UP"
 
       - name: Wait for health (phase 2)
